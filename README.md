@@ -1,6 +1,7 @@
 
 Sample usage:
 
+```python
 import json
 import pyOffice365
 
@@ -36,3 +37,4 @@ results = o.assign_license("example1", sku)
 
 print json.dumps(results, sort_keys=True, indent=4, separators=(',', ': '))
 
+```
