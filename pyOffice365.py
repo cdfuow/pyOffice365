@@ -9,38 +9,8 @@ import urllib2
 
 class pyOffice365():
 
-	__user_fields__ = [
-		"ObjectReference",
-		"ObjectType",
-		"AccountEnabled", #Required
-		"City",
-		"Country",
-		"Department",
-		"DirSyncEnabled",
-		"DisplayName",
-		"FacsimileTelephoneNumber",
-		"GivenName",
-		"JobTitle",
-		"LastDirSyncTime",
-		"MailNickname",	#Required
-		"Mobile",
-		"Password",
-		"PasswordPolicies",
-		"passwordProfile",
-		"PhysicalDeliveryOfficeName",
-		"PostalCode",
-		"PreferredLanguage",
-		"State",
-		"StreetAddress",
-		"Surname",
-		"TelephoneNumber",
-		"UsageLocation",
-		"UserPrincipalName",
-	]
-
-	def __init__(self, domain, domainid, debug=False):
+	def __init__(self, domain, debug=False):
 		self.domain = domain
-		self.domainid = domainid
 		self.__access_token = None
 		if debug:
 			urllib2.install_opener(urllib2.build_opener(urllib2.HTTPSHandler(debuglevel=1)))
@@ -65,13 +35,12 @@ class pyOffice365():
 	def __auth_header__(self):
 		return {
 			"Authorization": "Bearer %s" % (self.__access_token),
-			"x-ms-dirapi-data-contract-version": "0.8",
-			"Accept": "application/json;odata=verbose",
-			"Content-Type": "application/json;odata=verbose",
+			"Accept": "application/json;odata=nometadata",
+			"Content-Type": "application/json;odata=nometadaa",
 		}
 
 	def __doreq__(self, command, data=None):
-		req = urllib2.Request("https://%s/%s/%s" % (GRAPH_DOMAIN, self.domainid, command), data=data, headers=self.__auth_header__())
+		req = urllib2.Request("https://%s/%s/%s?api-version=0.9" % (GRAPH_DOMAIN, self.domain, command), data=data, headers=self.__auth_header__())
 
 		try:
 			u = urllib2.urlopen(req)
@@ -87,38 +56,30 @@ class pyOffice365():
 		return jdata
 
 	def get_tenant(self):
-		return self.__doreq__("TenantDetails")
+		return self.__doreq__("tenantDetails")
 
 	def get_users(self):
-		return self.__doreq__("Users")
+		return self.__doreq__("users")
 
 	def get_metadata(self):
 		return self.__doreq__("$metadata")
 
 	def get_user(self, username):
-		return self.__doreq__("Users('%s@%s')" % (username, self.domain))
+		return self.__doreq__("users/%s@%s" % (username, self.domain))
 	
 	def create_user(self, userdata):
-		return self.__doreq__("Users", json.dumps(userdata))
+		return self.__doreq__("users", json.dumps(userdata))
 
 	def assign_license(self, username, sku):
 		postData = {
-			"AddLicenses": [
+			"addLicenses": [
 				{
-					"__metadata": {
-						"type": "Microsoft.WindowsAzure.ActiveDirectory.AssignedLicense"
-					},
-					"DisabledPlans": {
-						"__metadata": {
-							"type": "Collection(Edm.Guid)"
-						},
-						"results": []
-					},
-					"SkuId": sku,
+					"disabledPlans": [],
+					"skuId": sku,
 				}
 			],
-			"RemoveLicenses": None,
+			"removeLicenses": None,
 		}
 
-		return self.__doreq__("Users('%s@%s')/AssignLicense" % (username, self.domain), json.dumps(postData))
+		return self.__doreq__("users/%s@%s/assignLicense" % (username, self.domain), json.dumps(postData))
 

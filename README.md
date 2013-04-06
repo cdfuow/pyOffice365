@@ -1,4 +1,6 @@
 
+Updated to use version 0.9
+
 Sample usage:
 
 ```python
@@ -6,11 +8,12 @@ import json
 import pyOffice365
 
 domain = "example.onmicrosoft.com"
-domainid = "<DOMAIN GUID>"
 appid = "<APPSERVICEPRINCIPAL GUID>"
 key = "<APPSERVICEPRINCIPAL SYMMETRIC KEY>"
 
-o = pyOffice365.pyOffice365(domain, domainid)
+sku = "<PLAN SKU>"
+
+o = pyOffice365.pyOffice365(domain)
 
 o.login(appid, key)
 
@@ -18,15 +21,18 @@ results = o.get_users()
 print json.dumps(results, sort_keys=True, indent=4, separators=(',', ': '))
 
 newUser = {
-	"AccountEnabled": "true",
-	"Country": "Australia",
-	"DisplayName": "example 1",
-	"GivenName": "example",
-	"MailNickname": "example1",
-	"Password": "can9r5gR40jJFFlL",
-	"Surname": "one",
-	"UsageLocation": "AU",
-	"UserPrincipalName": "example1@example.onmicrosoft.com",
+	"accountEnabled": "true",
+	"country": "Australia",
+	"displayName": "example 1",
+	"givenName": "example",
+	"mailNickname": "example1",
+	"passwordProfile": {
+		"password": "can9r5gR40jJFFlL",
+		"forceChangePasswordNextLogin": "false",
+	},
+	"surname": "one",
+	"usageLocation": "AU",
+	"userPrincipalName": "example1@example.onmicrosoft.com",
 }
 
 results = o.create_user(newUser)
