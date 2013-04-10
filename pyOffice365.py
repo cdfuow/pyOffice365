@@ -1,5 +1,5 @@
 
-OAUTH_URL = "https://accounts.accesscontrol.windows.net/tokens/OAuth/2"
+OAUTH_URL = "https://login.windows.net/%s/oauth2/token?api-version=1.0"
 GRAPH_DOMAIN = "graph.windows.net"
 GRAPH_PRINCIPAL_ID = "00000002-0000-0000-c000-000000000000"
 
@@ -25,7 +25,7 @@ class pyOffice365():
 		headers = {
 			"Content-Type": "application/x-www-form-urlencoded",
 		}
-		req = urllib2.Request(OAUTH_URL, urllib.urlencode(postData), headers)
+		req = urllib2.Request(OAUTH_URL % (self.domain), urllib.urlencode(postData), headers)
 		u = urllib2.urlopen(req)
 		data = u.readlines()
 		jdata = json.loads('\n'.join(data))
@@ -36,11 +36,16 @@ class pyOffice365():
 		return {
 			"Authorization": "Bearer %s" % (self.__access_token),
 			"Accept": "application/json;odata=nometadata",
-			"Content-Type": "application/json;odata=nometadaa",
+			"Content-Type": "application/json;odata=nometadata",
 		}
 
-	def __doreq__(self, command, data=None):
-		req = urllib2.Request("https://%s/%s/%s?api-version=0.9" % (GRAPH_DOMAIN, self.domain, command), data=data, headers=self.__auth_header__())
+	def __doreq__(self, command, postdata=None, querydata={}, method=None):
+		querydata['api-version'] = '2013-04-05'
+		
+		req = urllib2.Request("https://%s/%s/%s?%s" % (GRAPH_DOMAIN, self.domain, command, urllib.urlencode(querydata)), data=postdata, headers=self.__auth_header__())
+
+		if method is not None:
+			req.get_method = lambda: method
 
 		try:
 			u = urllib2.urlopen(req)
@@ -64,11 +69,17 @@ class pyOffice365():
 	def get_metadata(self):
 		return self.__doreq__("$metadata")
 
+	def get_skus(self):
+		return self.__doreq__("subscribedSkus")
+
 	def get_user(self, username):
 		return self.__doreq__("users/%s@%s" % (username, self.domain))
 	
 	def create_user(self, userdata):
 		return self.__doreq__("users", json.dumps(userdata))
+
+	def update_user(self, username, userdata):
+		return self.__doreq__("users/%s@%s" % (username, self.domain), postdata=json.dumps(userdata), method='PATCH')
 
 	def assign_license(self, username, sku):
 		postData = {
@@ -81,5 +92,5 @@ class pyOffice365():
 			"removeLicenses": None,
 		}
 
-		return self.__doreq__("users/%s@%s/assignLicense" % (username, self.domain), json.dumps(postData))
+		return self.__doreq__("users/%s@%s/assignLicense" % (username, self.domain), postdata=json.dumps(postData))
 
